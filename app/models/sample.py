@@ -9,7 +9,7 @@ class Sample(Base):
     barcode = Column(String(128), unique=True, nullable=False, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     sample_type = Column(String(100), nullable=True)
-    metadata_json = Column("metadata", JSON, nullable=True)  # renamed attribute
+    metadata_json = Column("metadata", JSON, nullable=True)  # column name "metadata"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     project = relationship("Project", backref="samples")
