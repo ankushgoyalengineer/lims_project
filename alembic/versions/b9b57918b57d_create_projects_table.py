@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=250), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("owner_id", sa.Integer(), nullable=True),
-        sa.Column("created_at", postgresql.TIMESTAMP(timezone=True), server_default=sa.text("now()")),
+        sa.Column("created_at", postgresql.TIMESTAMP(timezone=True), server_default=sa.text("CURRENT_TIMESTAMP")),
         sa.ForeignKeyConstraint(["owner_id"], ["users.id"], name="projects_owner_id_fkey"),
         postgresql_ignore_search_path=False,
     )
