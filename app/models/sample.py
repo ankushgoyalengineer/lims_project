@@ -1,15 +1,25 @@
-# app/models/sample.py
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, func
+from sqlalchemy import Column, Integer, String, ForeignKey, TIMESTAMP, text
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 from app.db import Base
 
 class Sample(Base):
     __tablename__ = "samples"
+
     id = Column(Integer, primary_key=True, index=True)
     barcode = Column(String(128), unique=True, nullable=False, index=True)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)
     sample_type = Column(String(100), nullable=True)
-    metadata_json = Column("metadata", JSON, nullable=True)  # column name "metadata"
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    # database column name (Postgres uses JSON type; tests use SQLite but JSON column will be text)
+    metadata_json = Column(JSON, nullable=True)
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+    )
 
-    project = relationship("Project", backref="samples")
+    project = relationship("Project", back_populates="samples")
+
+    @property
+    def metadata_dict(self):
+        return self.metadata_json if self.metadata_json is not None else {}

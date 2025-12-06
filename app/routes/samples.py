@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from app.deps import get_db, get_current_user
 from app.schemas import SampleCreate, SampleOut
 from app.models.sample import Sample
+from app.models.project import Project
 
 router = APIRouter(prefix="/samples", tags=["samples"])
 
@@ -17,32 +18,36 @@ def sample_to_dict(s: Sample) -> Dict[str, Any]:
         "id": s.id,
         "barcode": s.barcode,
         "sample_type": s.sample_type,
-        "metadata": s.metadata_json,
+        # <--- use the model helper property name
+        "metadata": s.metadata_dict,
         "project_id": s.project_id,
         "created_at": s.created_at,
     }
 
 
 @router.post("", response_model=SampleOut, status_code=status.HTTP_201_CREATED)
-def create_sample(
-    payload: SampleCreate,
-    db: Session = Depends(get_db),
-    _=Depends(get_current_user),
-):
+def create_sample(payload: SampleCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    if payload.project_id is not None:
+        project = db.get(Project, payload.project_id)
+        if not project:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
     s = Sample(
         barcode=payload.barcode,
         sample_type=payload.sample_type,
+        project_id=payload.project_id,
         metadata_json=payload.metadata,
-        project_id=payload.project_id if hasattr(payload, "project_id") else None,
     )
     db.add(s)
     try:
         db.commit()
-    except IntegrityError as e:
+        db.refresh(s)
+    except IntegrityError:
         db.rollback()
-        # detect unique constraint on barcode
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="barcode must be unique")
-    db.refresh(s)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Barcode already exists")
+    except Exception:
+        db.rollback()
+        raise
     return sample_to_dict(s)
 
 

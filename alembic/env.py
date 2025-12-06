@@ -3,7 +3,7 @@ from logging.config import fileConfig
 import sys
 from sqlalchemy import create_engine, pool
 from alembic import context
-
+import app.models
 # ensure project root on path
 sys.path.insert(0, "")
 

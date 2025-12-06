@@ -3,3 +3,6 @@ from .user import User
 from .project import Project
 from .sample import Sample
 from .event import Event
+from .refresh_token import RefreshToken
+
+
