@@ -97,7 +97,7 @@ def _make_event(
 # ------------------------------------------------------------
 
 @router.post("/token", response_model=TokenOut)
-@limiter.limit("5/minute")     # prevent brute-force login
+@limiter.limit("10/minute")     # prevent brute-force login
 def login_for_tokens(payload: TokenIn, request: Request, response: Response, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.username).first()
     if not user or not verify_password(payload.password, user.hashed_password):
